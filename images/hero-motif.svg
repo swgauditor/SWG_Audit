@@ -1,0 +1,26 @@
+<svg viewBox="0 0 600 500" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <pattern id="grid" width="36" height="36" patternUnits="userSpaceOnUse">
+      <path d="M36 0H0V36" fill="none" stroke="rgba(255,255,255,0.045)" stroke-width="1"/>
+    </pattern>
+    <radialGradient id="rg" cx="68%" cy="32%" r="58%">
+      <stop offset="0%" stop-color="rgba(255,37,56,0.16)"/>
+      <stop offset="100%" stop-color="transparent"/>
+    </radialGradient>
+  </defs>
+  <rect width="600" height="500" fill="url(#grid)"/>
+  <rect width="600" height="500" fill="url(#rg)"/>
+  <g stroke="rgba(255,37,56,0.3)" stroke-width="1.4" fill="none">
+    <path d="M330 130 L420 130 L442 156 L530 156"/>
+    <path d="M352 210 L440 210 L462 184 L548 184"/>
+    <path d="M322 290 L412 290 L434 316 L520 316"/>
+  </g>
+  <g fill="#ff4d5e">
+    <circle cx="330" cy="130" r="3"/><circle cx="530" cy="156" r="3"/>
+    <circle cx="352" cy="210" r="3"/><circle cx="548" cy="184" r="3"/>
+    <circle cx="322" cy="290" r="3"/><circle cx="520" cy="316" r="3"/>
+  </g>
+  <g stroke="rgba(255,255,255,0.09)" stroke-width="1.2" fill="none">
+    <rect x="432" y="168" width="64" height="32" rx="4"/>
+  </g>
+</svg>

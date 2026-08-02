@@ -1,0 +1,4 @@
+SWG Audit safe file-spoofing test.
+
+This file is intentionally named dummy.pdf.exe to test controls that inspect misleading double extensions.
+It is plain text content and does not contain executable code.

@@ -1,0 +1,4 @@
+data-theft/uploads/*
+*.bak-*
+*.mdx.bak-*
+node_modules/

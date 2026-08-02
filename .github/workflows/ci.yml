@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  pull_request:
+    branches:
+      - dev
+      - main
+  push:
+    branches:
+      - dev
+      - main
+  workflow_dispatch:
+
+jobs:
+  static-check:
+    name: Static site checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Validate static source
+        run: bash scripts/check-static-export.sh
+
+      - name: Start local static server
+        run: |
+          python3 -m http.server 3333 > /tmp/swgaudit-static.log 2>&1 &
+          echo $! > /tmp/swgaudit-static.pid
+          for i in {1..30}; do
+            if curl -fsS http://127.0.0.1:3333/ >/dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat /tmp/swgaudit-static.log
+          exit 1
+
+      - name: Run HTTP smoke tests
+        run: BASE_URL=http://127.0.0.1:3333 bash scripts/smoke-test.sh
