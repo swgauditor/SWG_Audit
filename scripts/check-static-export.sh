@@ -59,6 +59,10 @@ fi
 
 grep -q 'name="generator" content="Mintlify"' index.html || fail "index.html does not look like the Mintlify export"
 grep -q '/_next/static/' index.html || fail "index.html does not reference exported _next assets"
+grep -q 't\.swgaudit\.com' swg.js || fail "DNS tunnel tests must target t.swgaudit.com"
+if grep -q '"\.swgaudit\.com"' swg.js; then
+  fail "DNS tunnel tests must not target the apex swgaudit.com host"
+fi
 
 python3 - <<'PY'
 import json

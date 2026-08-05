@@ -1181,7 +1181,7 @@
   }
 
   function buildDnsChunks(id, file, encodedData) {
-    var suffix = ".swgaudit.com";
+    var suffix = ".t.swgaudit.com";
     var maxDataLength = 253 - id.length - suffix.length - 5;
     var chunks = [];
     for (var offset = 0, chunkNumber = 1; offset < encodedData.length; chunkNumber += 1) {
@@ -1279,7 +1279,7 @@
         var chunks = buildDnsChunks(id, file, base32(bytes));
         var attempted = 0;
         return runLimited(chunks, 8, function (chunk) {
-          var url = "https://" + id + "." + chunk.number + "." + chunk.labels.join(".") + ".swgaudit.com";
+          var url = "https://" + id + "." + chunk.number + "." + chunk.labels.join(".") + ".t.swgaudit.com";
           return fetch(url, { mode: "no-cors" }).catch(function () {}).finally(function () {
             attempted += 1;
             setOutput(out, "Running DNS tunnelling test: " + attempted + "/" + chunks.length + " requests attempted...");
