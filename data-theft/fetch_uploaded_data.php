@@ -1,9 +1,10 @@
 <?php
 header("Content-Type: application/json");
 
-const DNS_QUERY_LOG = "/var/log/named/query.log";
-const DNS_SUFFIX = "swgaudit.com";
-const MAX_LOOKBACK_SECONDS = 600;
+define("DNS_QUERY_LOG", "/var/log/named/query.log");
+define("DNS_HOST_LOG", __DIR__ . "/uploads/dns-tunnel-hosts.log");
+define("DNS_SUFFIX", "swgaudit.com");
+define("MAX_LOOKBACK_SECONDS", 600);
 
 try {
     $id = $_GET["id"] ?? "";
@@ -12,19 +13,27 @@ try {
         throw new Exception("Missing or invalid test ID");
     }
 
-    if (!is_readable(DNS_QUERY_LOG)) {
-        throw new Exception("DNS query log is not readable");
+    $chunks = [];
+
+    if (is_readable(DNS_QUERY_LOG)) {
+        $recentLog = read_recent_dns_log(DNS_QUERY_LOG, MAX_LOOKBACK_SECONDS);
+        if ($recentLog !== "") {
+            $chunks = extract_dns_chunks($recentLog, $id);
+        }
     }
 
-    $recentLog = read_recent_dns_log(DNS_QUERY_LOG, MAX_LOOKBACK_SECONDS);
-    if ($recentLog === "") {
-        echo json_encode(["success" => false, "message" => "No recent DNS queries found"]);
-        exit;
+    // DEV / IP-preview fallback: reconstruct from mirrored hostnames.
+    if (!isset($chunks[0]) && is_readable(DNS_HOST_LOG)) {
+        $hostLog = read_recent_dns_log(DNS_HOST_LOG, MAX_LOOKBACK_SECONDS);
+        if ($hostLog !== "") {
+            $chunks = extract_host_header_chunks($hostLog, $id);
+        }
     }
-
-    $chunks = extract_dns_chunks($recentLog, $id);
 
     if (!isset($chunks[0])) {
+        if (!is_readable(DNS_QUERY_LOG) && !is_readable(DNS_HOST_LOG)) {
+            throw new Exception("DNS query log is not readable");
+        }
         throw new Exception("Invalid or missing metadata in chunks");
     }
 
@@ -54,7 +63,6 @@ try {
             $missing[] = $chunkNumber;
             continue;
         }
-
         $encodedData .= $chunks[$chunkNumber];
     }
 
@@ -121,67 +129,121 @@ try {
 } catch (Exception $exception) {
     echo json_encode([
         "success" => false,
-        "message" => "Error processing data: " . $exception->getMessage(),
+        "message" => $exception->getMessage(),
     ]);
 }
 
-function read_recent_dns_log($path, $lookbackSeconds) {
-    $lines = file($path, FILE_IGNORE_NEW_LINES);
-    if ($lines === false) {
+function read_recent_dns_log(string $path, int $lookbackSeconds): string
+{
+    $size = filesize($path);
+    if ($size === false || $size === 0) {
+        return "";
+    }
+
+    $fh = fopen($path, "rb");
+    if ($fh === false) {
+        return "";
+    }
+
+    $readBytes = min($size, 2_000_000);
+    if ($size > $readBytes) {
+        fseek($fh, -$readBytes, SEEK_END);
+    }
+
+    $data = stream_get_contents($fh);
+    fclose($fh);
+    if ($data === false || $data === "") {
         return "";
     }
 
     $cutoff = time() - $lookbackSeconds;
-    $recentLines = [];
-
-    foreach ($lines as $line) {
-        $timestamp = strtotime(substr($line, 0, 20));
-        if ($timestamp !== false && $timestamp >= $cutoff) {
-            $recentLines[] = $line;
+    $kept = [];
+    foreach (explode("\n", $data) as $line) {
+        if ($line === "") {
+            continue;
         }
+        if (preg_match('/^(\\d{2})-([A-Za-z]{3})-(\\d{4})\\s+(\\d{2}):(\\d{2}):(\\d{2})/', $line, $m)) {
+            $ts = strtotime(sprintf("%s-%s-%s %s:%s:%s", $m[1], $m[2], $m[3], $m[4], $m[5], $m[6]));
+            if ($ts !== false && $ts < $cutoff) {
+                continue;
+            }
+        } elseif (preg_match('/^(\\d{10,})\\b/', $line, $m)) {
+            if ((int)$m[1] < $cutoff) {
+                continue;
+            }
+        }
+        $kept[] = $line;
     }
 
-    return implode("\n", $recentLines);
+    return $kept === [] ? $data : implode("\n", $kept);
 }
 
-function extract_dns_chunks($log, $id) {
-    $escapedId = preg_quote($id, "/");
-    $escapedSuffix = preg_quote(DNS_SUFFIX, "/");
-    $recordTypes = "(?:A|AAAA|HTTPS|SVCB)";
-    $pattern = "/queries: info: client @\\S+ [^#]+#\\d+ \\(" . $escapedId . "\\.(\\d+)\\.([A-Z2-7.]+)\\." . $escapedSuffix . "\\): query: " . $escapedId . "\\.\\1\\.\\2\\." . $escapedSuffix . " IN " . $recordTypes . "\\b/i";
-    preg_match_all($pattern, $log, $matches, PREG_SET_ORDER);
-
+function extract_dns_chunks(string $log, string $id): array
+{
     $chunks = [];
-    foreach ($matches as $match) {
+    $pattern = "/\\b" . preg_quote($id, "/") . "\\.(\\d+)\\.([a-z0-9.]+)\\." . preg_quote(DNS_SUFFIX, "/") . "\\b/i";
+
+    foreach (explode("\n", $log) as $line) {
+        if (!preg_match($pattern, $line, $match)) {
+            continue;
+        }
         $chunkNumber = (int)$match[1];
+        $labels = strtoupper(str_replace(".", "", $match[2]));
+        if ($labels === "") {
+            continue;
+        }
         if (!isset($chunks[$chunkNumber])) {
-            $chunks[$chunkNumber] = strtoupper(str_replace(".", "", $match[2]));
+            $chunks[$chunkNumber] = $labels;
         }
     }
 
-    ksort($chunks);
     return $chunks;
 }
 
-function base32_decode_dns($input) {
-    $alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
-    $input = preg_replace("/[^A-Z2-7]/", "", strtoupper($input));
-    $output = "";
-    $value = 0;
-    $bits = 0;
+function extract_host_header_chunks(string $log, string $id): array
+{
+    $chunks = [];
+    $pattern = "/\\b" . preg_quote($id, "/") . "\\.(\\d+)\\.([A-Za-z0-9.-]+)/";
 
-    for ($i = 0; $i < strlen($input); $i++) {
-        $index = strpos($alphabet, $input[$i]);
-        if ($index === false) {
+    foreach (explode("\n", $log) as $line) {
+        if (!preg_match($pattern, $line, $match)) {
             continue;
         }
+        $chunkNumber = (int)$match[1];
+        $rest = $match[2];
+        $rest = preg_replace("/(?:\\.\\d{1,3}){4}\\.sslip\\.io$/i", "", $rest);
+        $rest = preg_replace("/\\.swgaudit\\.com$/i", "", $rest);
+        $labels = strtoupper(str_replace(".", "", $rest));
+        if ($labels === "") {
+            continue;
+        }
+        if (!isset($chunks[$chunkNumber])) {
+            $chunks[$chunkNumber] = $labels;
+        }
+    }
 
-        $value = ($value << 5) | $index;
-        $bits += 5;
+    return $chunks;
+}
 
-        while ($bits >= 8) {
-            $output .= chr(($value >> ($bits - 8)) & 255);
-            $bits -= 8;
+function base32_decode_dns(string $input): string
+{
+    $alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
+    $input = strtoupper(preg_replace("/[^A-Z2-7]/", "", $input));
+    $buffer = 0;
+    $bitsLeft = 0;
+    $output = "";
+
+    $length = strlen($input);
+    for ($i = 0; $i < $length; $i++) {
+        $val = strpos($alphabet, $input[$i]);
+        if ($val === false) {
+            continue;
+        }
+        $buffer = ($buffer << 5) | $val;
+        $bitsLeft += 5;
+        if ($bitsLeft >= 8) {
+            $bitsLeft -= 8;
+            $output .= chr(($buffer >> $bitsLeft) & 0xFF);
         }
     }
 

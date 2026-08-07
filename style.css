@@ -254,17 +254,18 @@ div[class*="max-w-8xl"] {
 }
 .swg-app--home .swg-home-main {
   justify-content: flex-start;
-  padding-top: clamp(8px, 1.5vh, 20px);
+  padding-top: clamp(18px, 3.5vh, 48px);
 }
 .swg-app--home .swg-hero {
-  padding-block: clamp(10px, 1.8vh, 22px) clamp(6px, 1vh, 14px);
+  padding-block: clamp(20px, 3.5vh, 40px) clamp(10px, 1.6vh, 20px);
 }
 .swg-app--home .swg-hero h1 {
-  margin-bottom: 16px;
+  margin-bottom: 18px;
   font-size: clamp(30px, 3.4vw, 46px);
   line-height: 1.2;
   max-width: none;
   width: 100%;
+  text-align: center;
 }
 .swg-app--home .swg-hero-copy {
   width: min(1180px, 92vw);
@@ -274,7 +275,49 @@ div[class*="max-w-8xl"] {
 .swg-app--home .swg-hero-sub {
   max-width: none;
   width: 100%;
+  text-align: center;
+  margin-inline: auto;
+  padding-top: 0;
+  margin-bottom: 0;
+  font-size: clamp(16px, 1.7vw, 19px);
+  font-weight: 500;
+  line-height: 1.45;
+  letter-spacing: -0.012em;
 }
+.swg-app--home .swg-home-intro {
+  display: grid;
+  gap: 0;
+  margin-top: 28px;
+  margin-inline: auto;
+  width: 100%;
+  max-width: none;
+  text-align: center;
+  justify-items: center;
+}
+.swg-app--home .swg-home-intro p,
+.swg-app--home .swg-main .swg-home-intro p,
+.swg-audit-ui.swg-app--home .swg-home-intro p {
+  margin: 0;
+  width: 100%;
+  max-width: none;
+  text-align: center;
+}
+.swg-app--home .swg-home-intro p {
+  margin: 0;
+  width: 100%;
+  max-width: none;
+  font-size: clamp(15px, 1.45vw, 17px);
+  font-weight: 450;
+  line-height: 1.55;
+  letter-spacing: -0.01em;
+  color: var(--text-body);
+  text-align: center;
+}
+.swg-audit-ui .swg-home-intro p {
+  color: var(--sm-paper-soft);
+  opacity: 0.82;
+}
+
 .swg-app--home .swg-home-subhead {
   margin: 0 0 12px;
   color: var(--sm-paper);
@@ -387,6 +430,8 @@ div[class*="max-w-8xl"] {
 .swg-audit-ui .swg-app--home .swg-hero-sub {
   max-width: none;
   width: 100%;
+  color: var(--sm-paper);
+  opacity: 0.92;
 }
 .swg-audit-ui .swg-hero-sub,
 .swg-audit-ui .swg-section-head,
@@ -503,29 +548,34 @@ div[class*="max-w-8xl"] {
 .swg-about-lock {
   width: 92px;
   height: 92px;
-  display: grid;
-  place-items: center;
-  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  /* Slight optical nudge — padlock silhouette reads high if purely geometric */
+  padding-top: 4px;
   border-radius: 50%;
   background: rgba(236, 231, 221, 0.06);
   border: 1px solid var(--sm-line-2);
 }
 .swg-about-lock-shackle {
-  position: absolute;
-  top: 21px;
-  width: 30px;
-  height: 30px;
-  border: 6px solid var(--sm-amber);
+  position: static;
+  width: 24px;
+  height: 18px;
+  border: 5px solid var(--sm-amber);
   border-bottom: 0;
-  border-radius: 17px 17px 0 0;
+  border-radius: 14px 14px 0 0;
+  flex-shrink: 0;
 }
 .swg-about-lock-body {
-  position: absolute;
-  top: 42px;
-  width: 48px;
-  height: 37px;
-  border-radius: 9px;
+  position: static;
+  width: 38px;
+  height: 28px;
+  margin-top: -2px;
+  border-radius: 8px;
   background: linear-gradient(180deg, #f0b25e, #d97a52);
+  flex-shrink: 0;
 }
 .swg-about-text {
   margin: 0;
@@ -1040,11 +1090,19 @@ div[class*="max-w-8xl"] {
   border-radius: 5px;
 }
 
-.swg-form {
-  display: grid;
-  gap: 14px;
-  max-width: 520px;
-}
+
+
+
+
+
+
+
+
+
+
+
+
+
 .swg-field {
   display: grid;
   gap: 7px;
@@ -1681,9 +1739,9 @@ a.swg-brand { cursor: pointer; }
 .swg-audit-ui .swg-run--no-terminal {
   max-width: 980px;
 }
-/* Credential form: compact login-style box with a normal-width submit. */
+/* Credential form: form controls paired with a dummy payload panel. */
 .swg-audit-ui .swg-run--form {
-  max-width: 480px;
+  max-width: 880px;
 }
 .swg-audit-ui .swg-run--form .swg-form {
   max-width: 100%;
@@ -1696,6 +1754,32 @@ a.swg-brand { cursor: pointer; }
   width: auto;
   align-self: flex-start;
   padding-inline: 1.9rem;
+}
+.swg-audit-ui .swg-run--form .swg-cred-panel {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.9rem;
+  min-height: 100%;
+  padding: 1.15rem;
+  border: 1px solid var(--sm-line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+}
+.swg-audit-ui .swg-cred-title {
+  color: var(--sm-paper);
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 700;
+}
+.swg-audit-ui .swg-cred-panel p {
+  margin: 0;
+  color: var(--sm-paper-soft);
+  font-size: 0.9rem;
+  line-height: 1.55;
+}
+.swg-audit-ui .swg-cred-panel .swg-output {
+  margin-top: 0;
 }
 /* Cyberslacking: smaller media box. */
 .swg-audit-ui .swg-run--media {
@@ -2246,4 +2330,37 @@ a.swg-brand { cursor: pointer; }
   .swg-nav { gap: 10px; }
   .swg-nav-links { gap: 0; }
   .swg-nl { padding: 6px 9px; font-size: 13px; }
+}
+
+/* LOCKED home intro alignment — keep centered with H1 */
+.swg-app--home .swg-hero-copy,
+.swg-app--home .swg-hero h1,
+.swg-app--home .swg-hero-sub,
+.swg-app--home .swg-home-intro,
+.swg-app--home .swg-home-intro p {
+  text-align: center !important;
+  width: 100%;
+  max-width: none;
+  margin-inline: auto;
+}
+
+
+
+.swg-resource-confirm {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  margin: 0.75rem 0 1rem;
+  color: var(--sm-muted, #bac8dc);
+  font-size: 0.95rem;
+  line-height: 1.35;
+  cursor: pointer;
+}
+.swg-resource-confirm input {
+  margin: 0;
+  width: 1rem;
+  height: 1rem;
+  accent-color: #d7a45a;
+  flex: 0 0 auto;
+  align-self: center;
 }

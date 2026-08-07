@@ -1,0 +1,8 @@
+# Keep build tooling and agent docs out of the published site
+scripts/
+CONTEXT.md
+SITE_TEXT_INSTRUCTIONS.md
+*.bak
+*.bak-*
+**/*.bak
+**/*.bak-*
