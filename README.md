@@ -33,8 +33,4 @@ Designed to stay simple: one scenario, one action, one clear outcome.
 
 ## Safety
 
-Educational and controlled. Use dummy data. Do not submit real credentials or sensitive files.
-
-## Repository
-
-Mintlify source for SWG Audit. Edit and review here, then export and deploy through your normal pipeline to the live host. Site: [swgaudit.com](https://swgaudit.com)
+Use dummy data. Do not submit real credentials or sensitive files.
